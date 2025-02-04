@@ -11,20 +11,22 @@ WATCHED_DIR = r'/var/www/html/api/public/ftp'
 
 def process_image(image_path):
     """
-    Extrae idFirebase e idCompetition de la ruta y envía la imagen al endpoint.
+    Extrae el nombre de la carpeta desde la ruta y envía la imagen al endpoint.
+    Se espera la estructura: <nombre>/archivo.jpg
+
     Si el envío es exitoso, elimina la imagen local.
     Implementa reintentos en caso de error de permiso (archivo bloqueado).
     """
-    # Extraer la ruta relativa (se espera: idFirebase\<idCompetition>\archivo.jpg)
+    # Extraer la ruta relativa respecto a WATCHED_DIR.
+    # Se espera que la imagen esté dentro de una carpeta cuyo nombre usaremos para el endpoint.
     relative_path = os.path.relpath(image_path, WATCHED_DIR)
     parts = relative_path.split(os.sep)
-    if len(parts) < 3:
-        print("Estructura de carpetas inválida. Se esperaba: idFirebase/idCompetition/imagen")
+    if len(parts) < 2:
+        print("Estructura de carpetas inválida. Se esperaba: nombre/imagen")
         return
 
-    idFirebase = parts[0]
-    idCompetition = parts[1]
-    url = f"https://fotos.raceline.app/ia/imagenes/upload/{idCompetition}/{idFirebase}/"
+    nombre = parts[0]
+    url = f"https://fotos.raceline.app/ia/imagenes/uploadxNombre/{nombre}/"
     print(f"Llamando a {url} con la imagen: {image_path}")
 
     # Intentar abrir y enviar el archivo con reintentos en caso de PermissionError
@@ -70,7 +72,7 @@ class FolderImageHandler(FileSystemEventHandler):
 
 class Command(BaseCommand):
     help = ("Monitorea la carpeta 'imagenes' para detectar la creación de imágenes "
-            "en una estructura de carpetas (idFirebase/idCompetition) y llama a un endpoint de upload, "
+            "en una estructura de carpetas (nombre/imagen) y llama al endpoint uploadxNombre, "
             "eliminando la imagen local luego de procesarla.")
 
     def handle(self, *args, **kwargs):
